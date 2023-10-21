@@ -1,0 +1,8 @@
+events:
+  join:
+    message: "%player% has joined the server."
+  quit:
+    message: "%player% has left the server."
+
+worlds:
+  hub: "world"

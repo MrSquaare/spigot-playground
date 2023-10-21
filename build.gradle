@@ -1,0 +1,66 @@
+plugins {
+    id "checkstyle"
+    id "org.jetbrains.kotlin.jvm" version "${kotlinVersion}"
+}
+
+group "fr.mrsquaare"
+version "${pluginVersion}"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        name = "Spigot"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+}
+
+configurations {
+    remap
+}
+
+dependencies {
+    compileOnly group: "org.jetbrains.kotlin", name: "kotlin-stdlib", version: "${kotlinVersion}"
+    compileOnly group: "org.spigotmc", name: "spigot", version: "${spigotVersion}", classifier: "remapped-mojang"
+    remap group: "net.md-5", name: "SpecialSource", version: "1.11.3"
+    remap group: "org.spigotmc", name: "spigot", version: "${spigotVersion}", classifier: "remapped-mojang"
+    remap group: "org.spigotmc", name: "spigot", version: "${spigotVersion}", classifier: "remapped-obf"
+}
+
+processResources {
+    filesMatching("plugin.yml") {
+        expand("pluginVersion": "${pluginVersion}", "apiVersion": "${apiVersion}")
+    }
+}
+
+tasks.register("remapMojangToObfuscated", JavaExec) {
+    classpath = configurations.remap
+    mainClass = "net.md_5.specialsource.SpecialSource"
+
+    def mavenRoot = repositories.mavenLocal().url.path
+    def libsDirectory = layout.buildDirectory.dir("libs").get().asFile.path
+    def inputFile = "${libsDirectory}/${archivesBaseName}-${version}.jar"
+    def outputFileParent = "${libsDirectory}/${archivesBaseName}-${version}-obf.jar"
+
+    args "--live", "-i", "${inputFile}", "-o", "${outputFileParent}", "-m", "${mavenRoot}/org/spigotmc/minecraft-server/${spigotVersion}/minecraft-server-${spigotVersion}-maps-mojang.txt", "--reverse"
+
+    outputs.files outputFileParent
+}
+
+tasks.register("remapObfuscatedToSpigot", JavaExec) {
+    classpath = configurations.remap
+    mainClass = "net.md_5.specialsource.SpecialSource"
+
+    def mavenRoot = repositories.mavenLocal().url.path
+    def libsDirectory = layout.buildDirectory.dir("libs").get().asFile.path
+    def inputFile = "${libsDirectory}/${archivesBaseName}-${version}-obf.jar"
+    def outputFileParent = "${libsDirectory}/${archivesBaseName}-${version}.jar"
+
+    args "--live", "-i", "${inputFile}", "-o", "${outputFileParent}", "-m", "${mavenRoot}/org/spigotmc/minecraft-server/${spigotVersion}/minecraft-server-${spigotVersion}-maps-spigot.csrg"
+}
+
+tasks.register("remap", Task) {
+    dependsOn remapMojangToObfuscated, remapObfuscatedToSpigot
+}
+
+tasks.build.finalizedBy remap

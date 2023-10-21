@@ -1,0 +1,6 @@
+name: "SpigotPlayground"
+version: "${pluginVersion}"
+main: "fr.mrsquaare.spigotplayground.SpigotPlaygroundPlugin"
+api-version: "${apiVersion}"
+depend:
+  - Kotlin
