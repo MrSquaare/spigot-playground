@@ -19,7 +19,7 @@ import kotlin.math.min
 import kotlin.math.sqrt
 
 class HubExplosiveSnowballItem(plugin: SpigotPlaygroundPlugin) : BaseItem(plugin), ListenableItem {
-    override val stack = Stack(plugin);
+    override val stack = Stack(plugin)
 
     class Stack(plugin: SpigotPlaygroundPlugin) : BaseItem.Stack(
         plugin = plugin,
