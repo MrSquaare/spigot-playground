@@ -2,6 +2,7 @@ package fr.mrsquaare.spigotplayground.gui
 
 import fr.mrsquaare.spigotplayground.SpigotPlaygroundPlugin
 import fr.mrsquaare.spigotplayground.items.BaseItem
+import fr.mrsquaare.spigotplayground.items.ListenableItem
 import org.bukkit.event.EventHandler
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
@@ -25,6 +26,12 @@ abstract class BaseInventoryGUI<I : Inventory>(
 
     protected open fun open() {
         plugin.server.pluginManager.registerEvents(listen, plugin)
+
+        items.forEach {
+            if (it is ListenableItem) {
+                plugin.server.pluginManager.registerEvents(it.listen, plugin)
+            }
+        }
     }
 
     open fun onOpen(event: InventoryOpenEvent) {}
