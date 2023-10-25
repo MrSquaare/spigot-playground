@@ -24,7 +24,7 @@ class NPCInteractPacketHandler(plugin: SpigotPlaygroundPlugin, player: Player) :
         val interactionActionStr = interactionAction?.toString()
 
         if (actionTypeStr == "INTERACT_AT" && interactionActionStr == "MAIN_HAND") {
-            val npc = plugin.npcManager.getNPC(entityId) ?: return
+            val npc = plugin.npcManager.get(entityId) ?: return
 
             object : BukkitRunnable() {
                 override fun run() {

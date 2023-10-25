@@ -15,29 +15,34 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.server.network.CommonListenerCookie
 import net.minecraft.world.entity.player.Player
 import org.bukkit.Location
+import org.bukkit.entity.Player as BukkitPlayer
 import org.bukkit.Server
 import org.bukkit.World
 import org.bukkit.craftbukkit.v1_20_R2.CraftServer
 import org.bukkit.craftbukkit.v1_20_R2.CraftWorld
+import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.*
 
-class NPC(name: String, private val server: Server, private val world: World, location: Location) {
+class NPC(id: Int?, uuid: UUID, name: String, private val server: Server, private val world: World, location: Location) {
     val entity: ServerPlayer
+
+    constructor(name: String, server: Server, world: World, location: Location) : this(null, UUID.randomUUID(), name, server, world, location)
 
     init {
         val nmsServer = (server as CraftServer).server
         val nmsLevel = (world as CraftWorld).handle
         val gameProfile = GameProfile(
-            UUID.randomUUID(), name
+            uuid, name
         )
         val ci = ClientInformation.createDefault()
 
         entity = ServerPlayer(nmsServer, nmsLevel, gameProfile, ci)
 
+        entity.id = id ?: entity.id
         entity.setPos(
             location.x,
             location.y,
@@ -61,6 +66,18 @@ class NPC(name: String, private val server: Server, private val world: World, lo
         )
         nmsServer.playerList.broadcastAll(ClientboundAddEntityPacket(entity))
         nmsServer.playerList.broadcastAll(ClientboundSetEntityDataPacket(entity.id, entity.entityData.nonDefaultValues))
+    }
+
+    fun spawn(player: BukkitPlayer) {
+        val nmsPlayer = (player as CraftPlayer).handle
+
+        nmsPlayer.connection.send(
+            ClientboundPlayerInfoUpdatePacket(
+                ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, entity
+            )
+        )
+        nmsPlayer.connection.send(ClientboundAddEntityPacket(entity))
+        nmsPlayer.connection.send(ClientboundSetEntityDataPacket(entity.id, entity.entityData.nonDefaultValues))
     }
 
     fun despawn() {
@@ -142,5 +159,36 @@ class NPC(name: String, private val server: Server, private val world: World, lo
         )
 
         this.respawn()
+    }
+
+    fun toMap(): Map<*, *> {
+        return mapOf(
+            "id" to entity.id,
+            "uuid" to entity.uuid.toString(),
+            "name" to entity.gameProfile.name,
+            "world" to world.uid.toString(),
+            "x" to entity.x,
+            "y" to entity.y,
+            "z" to entity.z
+        )
+    }
+
+    companion object {
+        @JvmStatic
+        fun fromMap(map: Map<*, *>, server: Server): NPC? {
+            val id = map["id"] as Int? ?: return null
+            val uuidStr = map["uuid"] as String? ?: return null
+            val uuid = UUID.fromString(uuidStr)
+            val name = map["name"] as String? ?: return null
+            val worldUuidStr = map["world"] as String? ?: return null
+            val worldUUid = UUID.fromString(worldUuidStr)
+            val world = server.getWorld(worldUUid) ?: return null
+            val x = map["x"] as Double? ?: return null
+            val y = map["y"] as Double? ?: return null
+            val z = map["z"] as Double? ?: return null
+            val location = Location(world, x, y, z)
+
+            return NPC(id, uuid, name, server, world, location)
+        }
     }
 }

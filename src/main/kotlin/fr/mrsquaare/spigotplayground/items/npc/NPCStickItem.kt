@@ -87,7 +87,7 @@ class NPCStickItem(plugin: SpigotPlaygroundPlugin) : BaseItem(plugin), Listenabl
 
                     val npc = NPC(name, event.player.server, event.player.world, location)
 
-                    plugin.npcManager.addNPC(npc)
+                    plugin.npcManager.add(npc)
 
                     npc.spawn()
 
@@ -159,7 +159,7 @@ class NPCStickItem(plugin: SpigotPlaygroundPlugin) : BaseItem(plugin), Listenabl
         private fun handleDeleteNPC(event: NPCPlayerInteractEvent) {
             event.npc.despawn()
 
-            plugin.npcManager.removeNPC(event.npc.entity.id)
+            plugin.npcManager.remove(event.npc.entity.id)
 
             val spigotPlayer = event.player.spigot()
 
