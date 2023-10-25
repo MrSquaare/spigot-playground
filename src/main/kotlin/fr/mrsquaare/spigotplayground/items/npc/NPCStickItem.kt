@@ -60,8 +60,11 @@ class NPCStickItem(plugin: SpigotPlaygroundPlugin) : BaseItem(plugin), Listenabl
             NPCGUI(
                 plugin = plugin,
                 player = event.player,
-                onEdit = {
-                    handleEditNPC(event)
+                onRename = {
+                    handleRenameNPC(event)
+                },
+                onChangeSkin = {
+                    handleChangeSkinNPC(event)
                 },
                 onDelete = {
                     handleDeleteNPC(event)
@@ -84,7 +87,7 @@ class NPCStickItem(plugin: SpigotPlaygroundPlugin) : BaseItem(plugin), Listenabl
 
                     val npc = NPC(name, event.player.server, event.player.world, location)
 
-                    plugin.npcManager.addNPC(npc)
+                    plugin.npcManager.add(npc)
 
                     npc.spawn()
 
@@ -99,7 +102,7 @@ class NPCStickItem(plugin: SpigotPlaygroundPlugin) : BaseItem(plugin), Listenabl
             ).open()
         }
 
-        private fun handleEditNPC(event: NPCPlayerInteractEvent) {
+        private fun handleRenameNPC(event: NPCPlayerInteractEvent) {
             InputGUI(
                 plugin = plugin,
                 player = event.player,
@@ -121,10 +124,42 @@ class NPCStickItem(plugin: SpigotPlaygroundPlugin) : BaseItem(plugin), Listenabl
             ).open()
         }
 
+        private fun handleChangeSkinNPC(event: NPCPlayerInteractEvent) {
+            InputGUI(
+                plugin = plugin,
+                player = event.player,
+                title = "Enter Player name",
+                defaultValue = event.npc.entity.displayName,
+                onInput = { name ->
+                    plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
+                        if (!checkInput(name, event.player)) return@Runnable
+
+                        val spigotPlayer = event.player.spigot()
+
+                        try {
+                            event.npc.setSkin(name)
+                        } catch (_: Exception) {
+                            spigotPlayer.sendMessage(
+                                ChatMessageType.ACTION_BAR,
+                                TextComponent("§cThe player does not exist.")
+                            )
+                            event.player.playSound(event.player.location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f)
+                        }
+
+                        spigotPlayer.sendMessage(
+                            ChatMessageType.ACTION_BAR,
+                            TextComponent("§aThe NPC skin has been changed.")
+                        )
+                        event.player.playSound(event.player.location, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f)
+                    })
+                },
+            ).open()
+        }
+
         private fun handleDeleteNPC(event: NPCPlayerInteractEvent) {
             event.npc.despawn()
 
-            plugin.npcManager.removeNPC(event.npc.entity.id)
+            plugin.npcManager.remove(event.npc.entity.id)
 
             val spigotPlayer = event.player.spigot()
 

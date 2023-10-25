@@ -2,14 +2,14 @@ package fr.mrsquaare.spigotplayground.models
 
 import fr.mrsquaare.spigotplayground.packets.BasePacketHandler
 import fr.mrsquaare.spigotplayground.utilities.Reflector
-import io.netty.channel.Channel
+import io.netty.channel.ChannelPipeline
 import net.minecraft.network.Connection
 import net.minecraft.server.network.ServerCommonPacketListenerImpl
 import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer
 import org.bukkit.entity.Player
 
 class MyPlayer(val entity: Player) {
-    private val channel: Channel
+    private val channelPipeline: ChannelPipeline
     private var packetHandlers = listOf<BasePacketHandler<*>>()
 
     init {
@@ -18,13 +18,12 @@ class MyPlayer(val entity: Player) {
             nmsPlayer.connection, "c", ServerCommonPacketListenerImpl::class.java
         ) ?: error("Could not get connection from player")
 
-        channel = nmsConnection.channel
+        channelPipeline = nmsConnection.channel.pipeline()
+
     }
 
     fun addPacketHandlers(packetHandlers: List<BasePacketHandler<*>>) {
         this.packetHandlers = packetHandlers
-
-        val channelPipeline = channel.pipeline()
 
         this.packetHandlers.forEach { packetHandler ->
             if (channelPipeline.get(packetHandler.name) != null) return
@@ -34,11 +33,7 @@ class MyPlayer(val entity: Player) {
     }
 
     fun removePacketHandlers() {
-        val channelPipeline = channel.pipeline()
-
         packetHandlers.forEach { packetHandler ->
-            if (channelPipeline.get(packetHandler.name) == null) return
-
             channelPipeline.remove(packetHandler)
         }
 

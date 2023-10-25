@@ -5,32 +5,32 @@ import fr.mrsquaare.spigotplayground.models.MyPlayer
 import fr.mrsquaare.spigotplayground.packets.npc.NPCInteractPacketHandler
 import java.util.*
 
-class PlayerManager(private val plugin: SpigotPlaygroundPlugin) {
-    private val players = mutableMapOf<UUID, MyPlayer>()
+class MyPlayerManager(private val plugin: SpigotPlaygroundPlugin) {
+    private val myPlayers = mutableMapOf<UUID, MyPlayer>()
 
-    fun getPlayer(uniqueId: UUID): MyPlayer? = players[uniqueId]
+    fun get(uniqueId: UUID): MyPlayer? = myPlayers[uniqueId]
 
-    fun addPlayer(myPlayer: MyPlayer) {
+    fun add(myPlayer: MyPlayer) {
         myPlayer.addPacketHandlers(listOf(NPCInteractPacketHandler(plugin, myPlayer.entity)))
 
-        players[myPlayer.entity.uniqueId] = myPlayer
+        myPlayers[myPlayer.entity.uniqueId] = myPlayer
     }
 
-    fun removePlayer(uniqueId: UUID) {
-        val player = players.remove(uniqueId) ?: return
+    fun remove(uniqueId: UUID) {
+        val player = myPlayers.remove(uniqueId) ?: return
 
         player.removePacketHandlers()
     }
 
     fun registerPlayers() {
         plugin.server.onlinePlayers.forEach { player ->
-            addPlayer(MyPlayer(player))
+            add(MyPlayer(player))
         }
     }
 
     fun unregisterPlayers() {
-        players.forEach { (uniqueId) ->
-            removePlayer(uniqueId)
+        myPlayers.forEach { (uniqueId) ->
+            remove(uniqueId)
         }
     }
 }

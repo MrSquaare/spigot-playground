@@ -12,11 +12,14 @@ class PlayerListener(plugin: SpigotPlaygroundPlugin) : BaseListener(plugin) {
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        plugin.playerManager.addPlayer(MyPlayer(event.player))
+        plugin.myPlayerManager.add(MyPlayer(event.player))
+        plugin.npcManager.getAll().forEach { npc ->
+            npc.spawn(event.player)
+        }
     }
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        plugin.playerManager.removePlayer(event.player.uniqueId)
+        plugin.myPlayerManager.remove(event.player.uniqueId)
     }
 }
