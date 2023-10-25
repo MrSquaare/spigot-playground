@@ -38,18 +38,18 @@ abstract class BaseInventoryGUI<I : Inventory>(
     open fun onClick(event: InventoryClickEvent) {}
     open fun onClose(event: InventoryCloseEvent) {}
 
-    val listen = Listen()
+    open val listen = Listen()
 
-    inner class Listen : Listener {
+    open inner class Listen : Listener {
         @EventHandler
-        fun onInventoryOpen(event: InventoryOpenEvent) {
+        private fun onInventoryOpen(event: InventoryOpenEvent) {
             if (event.inventory != inventory) return
 
             onOpen(event)
         }
 
         @EventHandler
-        fun onInventoryClick(event: InventoryClickEvent) {
+        private fun onInventoryClick(event: InventoryClickEvent) {
             if (event.inventory != inventory) return
 
             val item = items.find { it.slot == event.slot }
@@ -60,7 +60,7 @@ abstract class BaseInventoryGUI<I : Inventory>(
         }
 
         @EventHandler
-        fun onInventoryClose(event: InventoryCloseEvent) {
+        private fun onInventoryClose(event: InventoryCloseEvent) {
             if (event.inventory != inventory) return
 
             onClose(event)
